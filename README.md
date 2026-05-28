@@ -18,29 +18,64 @@ Generate a Workspace API token from [dash.redirhub.com](https://dash.redirhub.co
 Authorization: Bearer rh_xxx...xxxx
 ```
 
-The MCP server is available on **all plans**, including Free.
+Available on **all plans**, including Free.
+
+## Server Info
+
+- **Name:** Redirect Infra Public API
+- **Version:** 1.0.1
+- **Transport:** Streamable HTTP (JSON-RPC 2.0)
+
+## Data Model
+
+Users belong to **workspaces** (organizations). Workspaces contain **custom domains** (Hosts) and **records** (Records, including redirects and short links).
 
 ## Resources
 
 Read workspace data via URI — append query params as `?key=value`.
 
+### Redirect Records
+
+| URI | Description | Filter Params |
+|-----|------|------|
+| `redirects://list` | List redirect records | `filter[host]`, `filter[search]`, `filter[tags]`, `filter[dns_correct]`, `filter[created_after]`, `filter[created_before]`, `sort`, `per_page`, `cursor` |
+| `redirects://{id}` | Get a single redirect by hashid | — |
+| `redirects://count` | Count total and paused redirects | — |
+
+### Short Links
+
+| URI | Description | Filter Params |
+|-----|------|------|
+| `links://list` | List short links | Same as `redirects://list` |
+| `links://{id}` | Get a single short link by hashid | — |
+
+### Domains
+
+| URI | Description | Filter Params |
+|-----|------|------|
+| `hosts://list` | List custom domains | `filter[search]`, `filter[short_url]`, `sort`, `per_page`, `cursor` |
+| `hosts://{hostname}` | Get a domain by hostname | — |
+
+### Workspace & Members
+
 | URI | Description |
 |-----|------|
-| `redirects://list` | List redirect records |
-| `redirects://{id}` | Get a single redirect by hashid |
-| `redirects://count` | Count total and paused redirects |
-| `links://list` | List short links |
-| `links://{id}` | Get a single short link by hashid |
-| `hosts://list` | List custom domains |
-| `hosts://{hostname}` | Get a domain by hostname |
 | `workspace://current` | Current workspace info |
 | `members://list` | List workspace members |
 | `members://{user_id}` | Get a member by UUID |
+
+### Account
+
+| URI | Description |
+|-----|------|
 | `account://me` | Current user profile |
+
+### Catalogs
+
+| URI | Description |
+|-----|------|
 | `plugins://catalog` | Available redirect plugins |
 | `record-types://catalog` | Available redirect types and routing strategies |
-
-**Filter params** (on `://list` endpoints): `filter[host]`, `filter[search]`, `filter[tags]`, `filter[dns_correct]`, `filter[created_after]`, `filter[created_before]`, `sort`, `per_page`, `cursor`
 
 ## Tools
 
@@ -48,10 +83,10 @@ Read workspace data via URI — append query params as `?key=value`.
 
 | Tool | What It Does |
 |------|------|
-| `create-redirect-tool` | Create one or more redirect records |
-| `create-link-tool` | Create a short link |
-| `update-record-tool` | Update any record (redirect or short link) |
-| `delete-record-tool` | Delete any record |
+| `create-redirect-tool` | Create one or more redirect records (supports array URL for bulk) |
+| `create-link-tool` | Create a short link (requires host + destination) |
+| `update-record-tool` | Update any record (redirect or short link) by hashid |
+| `delete-record-tool` | Delete any record (redirect or short link) by hashid |
 
 ### Domain Management
 
@@ -75,9 +110,25 @@ Read workspace data via URI — append query params as `?key=value`.
 
 | Tool | What It Does |
 |------|------|
-| `bulk-update-records-tool` | Apply field changes across records (always use `dry_run: true` first) |
-| `bulk-delete-records-tool` | Delete records by source URLs |
-| `bulk-import-tool` | Import records from JSON |
+| `bulk-update-records-tool` | Apply field changes across records |
+| `bulk-delete-records-tool` | Delete records by `source_urls[]` (array of source URLs) |
+| `bulk-import-tool` | Import records from JSON `rows[]` |
+
+**Bulk import format:** Each row: `{url, destination, type?, handler?, title?, description?, tags?, destinations?}`. `handler` is `"redirect"` or `"short-url"`. Supports `mode=create|upsert` and `dry_run`.
+
+### Account
+
+| Tool | What It Does |
+|------|------|
+| `update-account-tool` | Update user profile |
+
+### ⚠️ Bulk Operation Safety
+
+For `bulk-update-records-tool`, `bulk-delete-records-tool`, and `bulk-import-tool`:
+
+1. ALWAYS invoke first with `dry_run: true` to preview the affected count.
+2. Display the affected count to the user.
+3. Only re-invoke with `dry_run: false` after explicit user confirmation.
 
 ## Quick Start
 
