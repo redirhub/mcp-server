@@ -2,7 +2,7 @@
 
 **Control every redirect from your AI assistant.** Create, update, test, and monitor URL redirects through a standardized protocol — compatible with Claude, Cursor, and any MCP client.
 
-RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: create rules, verify destinations, and audit traffic — all without opening a dashboard.
+RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: manage redirects and short links, update domains, invite team members — all without opening a dashboard.
 
 ## Endpoint
 
@@ -20,34 +20,64 @@ Authorization: Bearer rh_xxx...xxxx
 
 The MCP server is available on **all plans**, including Free.
 
-## What You Can Do
+## Resources
 
-### Resources
+Read workspace data via URI — append query params as `?key=value`.
 
-Read your redirect infrastructure as structured data:
+| URI | Description |
+|-----|------|
+| `redirects://list` | List redirect records |
+| `redirects://{id}` | Get a single redirect by hashid |
+| `redirects://count` | Count total and paused redirects |
+| `links://list` | List short links |
+| `links://{id}` | Get a single short link by hashid |
+| `hosts://list` | List custom domains |
+| `hosts://{hostname}` | Get a domain by hostname |
+| `workspace://current` | Current workspace info |
+| `members://list` | List workspace members |
+| `members://{user_id}` | Get a member by UUID |
+| `account://me` | Current user profile |
+| `plugins://catalog` | Available redirect plugins |
+| `record-types://catalog` | Available redirect types and routing strategies |
 
-- **Workspace** — Account configuration
-- **Member** — Team access
-- **Host** — Domain settings per host
-- **Link** — Branded short links
-- **Redirect** — Redirect rules and configurations
-- **Account** — Billing details
-- **Plugins** — Available integrations
-- **RecordTypes** — Record type definitions
-- **CountRedirects** — Redirect volume metrics
-- **ListLinks / ListHosts / ListMembers / ListRedirects** — Paginated views
+**Filter params** (on `://list` endpoints): `filter[host]`, `filter[search]`, `filter[tags]`, `filter[dns_correct]`, `filter[created_after]`, `filter[created_before]`, `sort`, `per_page`, `cursor`
 
-### Tools
+## Tools
+
+### Record Management
 
 | Tool | What It Does |
 |------|------|
-| CreateLink / UpdateLink / DeleteLink | Manage branded short links |
-| CreateRedirect / UpdateRedirect / DeleteRedirect | Manage redirect rules |
-| CreateHost / UpdateHost / DeleteHost | Manage custom domains |
-| CreateMember / UpdateMember / DeleteMember | Manage team access |
-| CreateWorkspace / UpdateWorkspace | Manage workspaces |
-| BulkImport / BulkDelete / BulkUpdateRecords | Operate on many records at once (supports `dry_run`) |
-| DescribeResource / QueryResource / GetRecord / ExecuteBulkAction | Inspect schemas, query data, and run actions |
+| `create-redirect-tool` | Create one or more redirect records |
+| `create-link-tool` | Create a short link |
+| `update-record-tool` | Update any record (redirect or short link) |
+| `delete-record-tool` | Delete any record |
+
+### Domain Management
+
+| Tool | What It Does |
+|------|------|
+| `update-host-tool` | Update domain settings |
+| `refresh-host-tool` | Refresh DNS status |
+| `create-host-link-tool` | Enable domain for short links |
+| `delete-host-link-tool` | Disable short links on a domain |
+
+### Workspace & Members
+
+| Tool | What It Does |
+|------|------|
+| `add-member-tool` | Invite a new member |
+| `update-member-tool` | Update member role |
+| `remove-member-tool` | Remove a member |
+| `update-workspace-tool` | Update workspace settings |
+
+### Bulk Operations
+
+| Tool | What It Does |
+|------|------|
+| `bulk-update-records-tool` | Apply field changes across records (always use `dry_run: true` first) |
+| `bulk-delete-records-tool` | Delete records by source URLs |
+| `bulk-import-tool` | Import records from JSON |
 
 ## Quick Start
 
@@ -72,7 +102,7 @@ Add to your client config — the endpoint accepts standard MCP HTTP transport:
 }
 ```
 
-This config works for Claude Desktop, Cursor, and any MCP-compatible HTTP client.
+Works with Claude Desktop, Cursor, and any MCP-compatible HTTP client.
 
 ### 3. Use It
 
@@ -80,9 +110,9 @@ Once connected, tell your AI agent what you need:
 
 > *"Create a 301 redirect from `/old-blog` to `/blog` on my domain."*
 
-> *"Show me analytics for all redirects on my marketing domain."*
+> *"List all short links on my marketing domain."*
 
-> *"Import these 500 URLs from this CSV into a new host."*
+> *"Import these 500 URLs from this JSON into my workspace."*
 
 ## Documentation
 
