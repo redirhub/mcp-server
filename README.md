@@ -83,7 +83,7 @@ Read workspace data via URI — append query params as `?key=value`.
 
 | Tool | What It Does |
 |------|------|
-| `create-redirect-tool` | Create one or more redirect records (supports array URL for bulk) |
+| `create-redirect-tool` | Create a redirect record |
 | `create-link-tool` | Create a short link (requires host + destination) |
 | `update-record-tool` | Update any record (redirect or short link) by hashid |
 | `delete-record-tool` | Delete any record (redirect or short link) by hashid |
