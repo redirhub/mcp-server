@@ -29,8 +29,8 @@ Read your redirect infrastructure as structured data:
 - **Workspace** — Account configuration
 - **Member** — Team access
 - **Host** — Domain settings per host
-- **Link** — Individual redirect rules
-- **Redirect** — Advanced redirect configurations
+- **Link** — Branded short links
+- **Redirect** — Redirect rules and configurations
 - **Account** — Billing details
 - **Plugins** — Available integrations
 - **RecordTypes** — Record type definitions
@@ -41,8 +41,8 @@ Read your redirect infrastructure as structured data:
 
 | Tool | What It Does |
 |------|------|
-| CreateLink / UpdateLink / DeleteLink | Manage redirect rules |
-| CreateRedirect / UpdateRedirect / DeleteRedirect | Manage advanced redirect configurations |
+| CreateLink / UpdateLink / DeleteLink | Manage branded short links |
+| CreateRedirect / UpdateRedirect / DeleteRedirect | Manage redirect rules |
 | CreateHost / UpdateHost / DeleteHost | Manage custom domains |
 | CreateMember / UpdateMember / DeleteMember | Manage team access |
 | CreateWorkspace / UpdateWorkspace | Manage workspaces |
