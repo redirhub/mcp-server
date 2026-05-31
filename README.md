@@ -1,13 +1,27 @@
 # RedirHub MCP Server
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/redirhub/mcp-server/pulls)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-v1.0-FF6B35.svg)](https://modelcontextprotocol.io)
+[![Built for AI Agents](https://img.shields.io/badge/Built%20for-AI%20Agents-8B5CF6.svg)](https://redirhub.com)
+
 **Control every redirect from your AI assistant.** Create, update, test, and monitor URL redirects through a standardized protocol — compatible with Claude, Cursor, and any MCP client.
 
 RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: manage redirects and short links, update domains, invite team members — all without opening a dashboard.
 
+## Features
+
+- **AI-Native Redirect Management** — Create, update, and test URL redirects through natural language. No dashboard required.
+- **Custom Short Links** — Generate branded short URLs with your own domains. Full alternative to Bitly.
+- **DNS Verification** — Automatic DNS correctness checks so your redirects always resolve.
+- **Team Collaboration** — Multi-member workspace with role-based access control.
+- **Analytics Ready** — Track redirect click performance through the RedirHub dashboard.
+- **MCP Protocol** — Compatible with Claude, Cursor, Cline, and any MCP client.
+
 ## Endpoint
 
 ```
-https://service.redirhub.com/mcp/v1
+https://api.redirhub.com/mcp/v1
 ```
 
 ## Authentication
@@ -144,7 +158,7 @@ Add to your client config — the endpoint accepts standard MCP HTTP transport:
 {
   "mcpServers": {
     "redirhub": {
-      "url": "https://service.redirhub.com/mcp/v1",
+      "url": "https://api.redirhub.com/mcp/v1",
       "headers": {
         "Authorization": "Bearer rh_YOUR_API_TOKEN"
       }
