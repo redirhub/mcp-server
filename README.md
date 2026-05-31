@@ -21,7 +21,7 @@ RedirHub is redirect infrastructure. This MCP server gives your AI agents direct
 ## Endpoint
 
 ```
-https://service.redirhub.com/mcp/v1
+https://api.redirhub.com/mcp/v1
 ```
 
 ## Authentication
@@ -158,7 +158,7 @@ Add to your client config — the endpoint accepts standard MCP HTTP transport:
 {
   "mcpServers": {
     "redirhub": {
-      "url": "https://service.redirhub.com/mcp/v1",
+      "url": "https://api.redirhub.com/mcp/v1",
       "headers": {
         "Authorization": "Bearer rh_YOUR_API_TOKEN"
       }
