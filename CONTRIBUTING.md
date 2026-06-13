@@ -16,7 +16,7 @@ Found a bug or have a feature request? [Open an issue](https://github.com/redirh
 
 ## Development Setup
 
-No local development environment needed — this is an MCP server that connects to the RedirHub API at `https://service.redirhub.com/mcp/v1`. Just generate a Workspace API token from [dash.redirhub.com/settings/api-tokens](https://dash.redirhub.com/settings/api-tokens).
+No local development environment needed — this is an MCP server that connects to the RedirHub API at `https://api.redirhub.com/mcp/v1`. Just generate a Workspace API token from [dash.redirhub.com/settings/api-tokens](https://dash.redirhub.com/settings/api-tokens).
 
 ## Code of Conduct
 
