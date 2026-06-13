@@ -7,15 +7,15 @@
 
 **Control every redirect from your AI assistant.** Create, update, test, and monitor URL redirects through a standardized protocol — compatible with Claude, Cursor, and any MCP client.
 
-RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: manage redirects and short links, update domains, invite team members — all without opening a dashboard.
+RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: manage redirects and short links, update domains, invite team members, query analytics — all without opening a dashboard.
 
 ## Features
 
 - **AI-Native Redirect Management** — Create, update, and test URL redirects through natural language. No dashboard required.
 - **Custom Short Links** — Generate branded short URLs with your own domains. Full alternative to Bitly.
 - **DNS Verification** — Automatic DNS correctness checks so your redirects always resolve.
+- **Analytics & Logs** — Query click statistics and raw access logs directly from your AI assistant.
 - **Team Collaboration** — Multi-member workspace with role-based access control.
-- **Analytics Ready** — Track redirect click performance through the RedirHub dashboard.
 - **MCP Protocol** — Compatible with Claude, Cursor, Cline, and any MCP client.
 
 ## Endpoint
@@ -29,7 +29,7 @@ https://api.redirhub.com/mcp/v1
 Generate a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) (**Settings → API Tokens**) and pass it as a Bearer token:
 
 ```
-Authorization: Bearer rh_xxx...xxxx
+Authorization: Bearer ***
 ```
 
 Available on **all plans**, including Free.
@@ -106,10 +106,9 @@ Read workspace data via URI — append query params as `?key=value`.
 
 | Tool | What It Does |
 |------|------|
-| `update-host-tool` | Update domain settings |
-| `refresh-host-tool` | Refresh DNS status |
-| `create-host-link-tool` | Enable domain for short links |
-| `delete-host-link-tool` | Disable short links on a domain |
+| `connect-host-tool` | Connect a domain to your workspace. Supports root (`example.com`), subdomain (`sub.example.com`), and wildcard (`*.example.com`). Optionally enable or disable short URLs. Returns DNS configuration instructions. |
+| `update-host-tool` | Update domain settings (currently HTTPS toggle only) |
+| `refresh-host-tool` | Refresh DNS status for a domain |
 
 ### Workspace & Members
 
@@ -120,6 +119,19 @@ Read workspace data via URI — append query params as `?key=value`.
 | `remove-member-tool` | Remove a member |
 | `update-workspace-tool` | Update workspace settings |
 
+### Account
+
+| Tool | What It Does |
+|------|------|
+| `update-account-tool` | Update user profile |
+
+### 📊 Statistics (read-only)
+
+| Tool | What It Does |
+|------|------|
+| `get-stats-tool` | Get analytics (click) data. Set `file`/`files` for per-link stats (totals, daily trend, breakdowns by country/city/browser/device/referrer/proto); omit for org-level stats (total clicks, unique visitors, active/total link counts, breakdowns by file/handler). Supports `time_range` (7d/30d/90d/this_month/last_month/lifetime) or custom `date_from`+`date_to`. Optional `handler` and `limit`. |
+| `get-access-logs-tool` | Get raw HTTP request logs. Returns individual visit records (timestamp, IP, user agent, country, browser, referrer, etc.). Optional filters: `file`, `time_range`/`date_from`+`date_to`, `country`, `handler`, `browser`, `device`, `referrer`, `search` (IP or UA). Supports cursor-based pagination. |
+
 ### Bulk Operations
 
 | Tool | What It Does |
@@ -129,12 +141,6 @@ Read workspace data via URI — append query params as `?key=value`.
 | `bulk-import-tool` | Import records from JSON `rows[]` |
 
 **Bulk import format:** Each row: `{url, destination, type?, handler?, title?, description?, tags?, destinations?}`. `handler` is `"redirect"` or `"short-url"`. Supports `mode=create|upsert` and `dry_run`.
-
-### Account
-
-| Tool | What It Does |
-|------|------|
-| `update-account-tool` | Update user profile |
 
 ### ⚠️ Bulk Operation Safety
 
@@ -176,6 +182,8 @@ Once connected, tell your AI agent what you need:
 > *"Create a 301 redirect from `/old-blog` to `/blog` on my domain."*
 
 > *"List all short links on my marketing domain."*
+
+> *"Show me click stats for the past 30 days."*
 
 > *"Import these 500 URLs from this JSON into my workspace."*
 
