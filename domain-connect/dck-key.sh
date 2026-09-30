@@ -5,11 +5,18 @@
 #   ./dck-key.sh verify  <public.pem> [host]             Check the published records reassemble into <public.pem>
 #   ./dck-key.sh selftest <private.pem> [host]           Sign a sample apply query and verify it with the key from DNS
 #
-# host defaults to _dck1.redirhub.com. Run on a trusted machine; never commit the private key.
+# host defaults to ${DC_KEY_HOST}.${DC_KEY_DOMAIN} from .env. Run on a trusted machine; never commit the private key.
 set -euo pipefail
 
+if [ -f "$(dirname "$0")/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "$(dirname "$0")/.env"
+    set +a
+fi
+
 CHUNK=200
-HOST_DEFAULT="_dck1.redirhub.com"
+HOST_DEFAULT="${DC_KEY_HOST:-_dck1}.${DC_KEY_DOMAIN:-}"
 
 pubkey_b64() {
     openssl pkey -pubin -in "$1" -outform DER | openssl base64 -A
@@ -42,6 +49,7 @@ records)
     ;;
 verify)
     host=${3:-$HOST_DEFAULT}
+    [ "${host%.}" != "$host" ] && { echo "Set DC_KEY_DOMAIN in .env or pass the key host" >&2; exit 2; }
     want=$(pubkey_b64 "$2")
     got=$(dns_b64 "$host")
     if [ "$want" = "$got" ]; then
@@ -53,6 +61,7 @@ verify)
     ;;
 selftest)
     host=${3:-$HOST_DEFAULT}
+    [ "${host%.}" != "$host" ] && { echo "Set DC_KEY_DOMAIN in .env or pass the key host" >&2; exit 2; }
     tmp=$(mktemp -d)
     trap 'rm -rf "$tmp"' EXIT
     query="domain=example.com&host=shop&hashid=abc123&redirect_uri=https%3A%2F%2Fdash.redirhub.com%2Fdomain-connect%2Fcallback"
@@ -68,7 +77,7 @@ selftest)
     echo "Signed URL suffix: &sig=$(openssl base64 -A <"$tmp/sig" | python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=""))')&key=${host%%.*}"
     ;;
 *)
-    sed -n '2,9p' "$0"
+    sed -n '2,8p' "$0"
     exit 2
     ;;
 esac

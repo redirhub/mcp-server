@@ -4,9 +4,22 @@ Working files for the **Connect DNS: Preparation runbook** (Notion, Product HQ â
 
 | File | Purpose |
 |------|---------|
-| `redirhub.com.hostname.json` | Template for subdomains (`shop.example.com`): one CNAME. |
-| `redirhub.com.apex.json` | Template for root domains (`example.com`): A record plus the `rehd-verify=` TXT record. |
-| `dck-key.sh` | Prints the `_dck1` TXT records for a public key, checks them in DNS, and signs a sample query to test the full chain. |
+| `templates/hostname.json.tmpl` | Template for subdomains (`shop.example.com`): one CNAME. |
+| `templates/apex.json.tmpl` | Template for root domains (`example.com`): A record plus the `rehd-verify=` TXT record. |
+| `.env.example` | Provider ID, service IDs, key domain and the other `DC_*` settings. Copy it to `.env`, which is not committed. |
+| `build.sh` | Writes the hard-coded submission files to `dist/<providerId>.<serviceId>.json` and lints them. |
+| `dck-key.sh` | Prints the TXT records for a public key, checks them in DNS, and signs a sample query to test the full chain. |
+| `logo.svg` | Brand-kit horizontal logo (from www.redirhub.com/brand) to attach to the Cloudflare email. |
+
+The provider ID, service IDs and key domain are kept in env rather than in the repository. They are written into the JSON only by `build.sh`, when preparing the Templates PR:
+
+```bash
+cp .env.example .env        # fill in DC_PROVIDER_ID, DC_SERVICE_ID_*, DC_KEY_DOMAIN
+DCTL=/path/to/dctl ./build.sh
+# dist/<providerId>.<serviceId>.json  â†’ root folder of the Domain-Connect/Templates PR
+```
+
+`logoUrl` defaults to the brand-kit SVG on CloudFront (`image/svg+xml`, versioned `v1` path), so the template and the Cloudflare email use the same logo.
 
 ## Change to the runbook: two templates, not two groups
 
@@ -18,23 +31,23 @@ DCTL1012 record host must not be @ when template hostRequired is false
 
 A CNAME on `@` is valid only when the template sets `hostRequired: true`. That flag then blocks root domains. So there are two templates:
 
-- `redirhub.com.hostname` sets `hostRequired: true` and contains the CNAME.
-- `redirhub.com.apex` contains the A and TXT records.
+- The hostname template (`DC_SERVICE_ID_HOSTNAME`) sets `hostRequired: true` and contains the CNAME.
+- The apex template (`DC_SERVICE_ID_APEX`) contains the A and TXT records.
 
-The backend picks the template from `mode` (sub / apex) that discovery already returns. The provider check in discovery (`/v2/domainTemplates/providers/redirhub.com/services/{serviceId}`) must use the matching service ID.
+The backend picks the template from `mode` (sub / apex) that discovery already returns. The provider check in discovery (`/v2/domainTemplates/providers/{providerId}/services/{serviceId}`) must use the matching service ID. The backend should read these IDs from the same env names (`DOMAIN_CONNECT_*` in config).
 
 ## Checks run
 
-Both templates pass these checks with no errors:
+With `.env` set to `redirhub.com`, `hostname` / `apex` and `redirhub.com`, both rendered templates pass these checks with no errors:
 
 - The linter's `-merge-or-fail` mode (the Templates repository's auto-merge condition).
 - The logo reachability check (`-logos`).
 - JSON Schema validation against `template.schema`.
 
 ```bash
-git clone https://github.com/Domain-Connect/dc-template-linter && cd dc-template-linter && go build -o dctl .
-./dctl -merge-or-fail -logos ../redirhub.com.*.json
-./dctl -cloudflare ../redirhub.com.*.json   # Cloudflare-specific notes
+git clone https://github.com/Domain-Connect/dc-template-linter && (cd dc-template-linter && go build -o dctl .)
+DCTL=dc-template-linter/dctl ./build.sh
+dc-template-linter/dctl -cloudflare dist/*.json   # Cloudflare-specific notes
 ```
 
 Cloudflare mode prints notes. They don't block the templates, but engineering must plan for them:
@@ -53,16 +66,16 @@ Cloudflare mode prints notes. They don't block the templates, but engineering mu
   - The CNAME is `Cluster::getHashCname($org)`. When the cluster's `cname` is a wildcard (`*.suffix`), the `*` is replaced with the **workspace** hashid, not a per-host ID. So `%hashid%` is the organization's `hashid()`.
   - The TXT value is `Host::txtRecordPrefix()` followed by the same CNAME, which gives `rehd-verify=<hashid>.<suffix>` on REHD.
   - The A record value is `cluster->ip`.
-- **Cluster suffix:** the templates use `rediredge.com`. Live DNS supports it: `*.redirhub.com` points to `qzppjq.rediredge.com`, and test fixtures use the same shape. **Confirm this in production with `SELECT DISTINCT cname FROM cluster`.**
+- **Cluster suffix:** `DC_CLUSTER_SUFFIX` defaults to `rediredge.com`. Live DNS supports it: `*.redirhub.com` points to `qzppjq.rediredge.com`, and test fixtures use the same shape. **Confirm this in production with `SELECT DISTINCT cname FROM cluster`.**
   - `database/seeders/ClusterHashCname.php` also lists older `*.urllize.com` values.
   - `Cluster::getHashCname()` returns non-wildcard cnames unchanged, with no hashid.
   - Any cluster whose cname is not `*.rediredge.com` needs its own template or must be excluded from Automatic setup.
-- **Platform:** `txtRecordPrefix()` is built from `config('app.platform')` (default `REHD`). Both templates hard-code `rehd-verify=`, so Automatic setup must be turned off when `PLATFORM` is not `REHD`.
+- **Platform:** `txtRecordPrefix()` is built from `config('app.platform')` (default `REHD`). Both templates hard-code the `rehd-verify=` prefix, so Automatic setup must be turned off when `PLATFORM` is not `REHD`.
 - **MX:** `Modules\Host\Enums\DnsRecord` has no MX case yet, which matches the spec requirement. There is no Domain Connect code in the backend yet.
 
 ## Key domain warning
 
-`redirhub.com` is on Cloudflare and has a **wildcard TXT record**. Today `_dck1.redirhub.com` and `_dck2.redirhub.com` both return `"vglvxl.rediredge.com"`. Publishing explicit `_dck1` records overrides the wildcard for that name. Until then, anything that fetches the key gets a wrong value. `dck-key.sh verify` ignores records that don't start with `p=`.
+If `DC_KEY_DOMAIN` is `redirhub.com`: that zone is on Cloudflare and has a **wildcard TXT record**. Today `_dck1.redirhub.com` and `_dck2.redirhub.com` both return `"vglvxl.rediredge.com"`. Publishing explicit `_dck1` records overrides the wildcard for that name. Until then, anything that fetches the key gets a wrong value. `dck-key.sh verify` ignores records that don't start with `p=`.
 
 ## Publishing the key
 
@@ -71,7 +84,7 @@ Generate the key on a trusted machine, not in CI or a shared container:
 ```bash
 openssl genrsa -out dc_private.pem 2048
 openssl rsa -in dc_private.pem -pubout -out dc_public.pem
-./dck-key.sh records dc_public.pem          # add each line as a TXT record at _dck1.redirhub.com (DNS only)
+./dck-key.sh records dc_public.pem          # add each line as a TXT record at ${DC_KEY_HOST}.${DC_KEY_DOMAIN}
 ./dck-key.sh verify dc_public.pem           # OK once DNS has propagated
 ./dck-key.sh selftest dc_private.pem        # signs a sample query and verifies it with the key from DNS
 ```
@@ -100,11 +113,10 @@ These items need access that the preparation work didn't have:
 
 | Runbook item | Owner needs |
 |--------------|-------------|
-| Confirm the provider ID, service IDs and key domain (the drafts use `redirhub.com`, `hostname` / `apex`, `redirhub.com`) | Product decision |
+| Set the final provider ID, service IDs and key domain in `.env` before running `build.sh` for the PR | Product decision |
 | Distinct cluster cnames, and production evidence for the spec (provider mix, share unverified after 24 hours and after 7 days) | Production database |
 | Shared mailbox `domain-connect@redirhub.com` | Google Workspace admin |
 | Generate the key, store `DOMAIN_CONNECT_PRIVATE_KEY`, publish `_dck1` | Trusted machine, production secrets, Cloudflare DNS for redirhub.com |
-| SVG logo for Cloudflare (the templates use the site's PNG, `logo.png`) | Brand asset |
 | Online editor tests (apex and subdomain), then the PR to Domain-Connect/Templates | Browser session. The PR goes from a fork under the company's GitHub account. |
 | Emails to providers, test domains at GoDaddy and Cloudflare, staging workspace | External accounts, purchases |
 | Issues in redirhub/backend and redirhub/lviv | Can be opened on request |

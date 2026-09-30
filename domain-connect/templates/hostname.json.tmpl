@@ -1,21 +1,21 @@
 {
-    "providerId": "redirhub.com",
+    "providerId": "${DC_PROVIDER_ID}",
     "providerName": "RedirHub",
-    "serviceId": "hostname",
+    "serviceId": "${DC_SERVICE_ID_HOSTNAME}",
     "serviceName": "Custom hostname",
     "version": 1,
-    "logoUrl": "https://www.redirhub.com/assets/images/logo.png",
+    "logoUrl": "${DC_LOGO_URL}",
     "description": "Points a custom subdomain to RedirHub so it can serve redirects and short links with HTTPS.",
     "variableDescription": "%hashid%: RedirHub workspace identifier used in the CNAME target",
     "syncBlock": false,
-    "syncPubKeyDomain": "redirhub.com",
-    "syncRedirectDomain": "dash.redirhub.com",
+    "syncPubKeyDomain": "${DC_KEY_DOMAIN}",
+    "syncRedirectDomain": "${DC_REDIRECT_DOMAIN}",
     "hostRequired": true,
     "records": [
         {
             "type": "CNAME",
             "host": "@",
-            "pointsTo": "%hashid%.rediredge.com",
+            "pointsTo": "%hashid%.${DC_CLUSTER_SUFFIX}",
             "ttl": 600,
             "essential": "OnApply"
         }
