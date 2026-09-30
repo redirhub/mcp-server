@@ -78,6 +78,22 @@ openssl rsa -in dc_private.pem -pubout -out dc_public.pem
 
 A 2048-bit key produces two records of about 200 characters each.
 
+## Provider onboarding paths (checked 2026-09-30)
+
+domainconnect.org says onboarding is done "by contacting them", and some providers "may require contractual terms". No primary source says any provider picks up templates from the repository automatically. Contacts marked *listed* come from domainconnect.org/dns-providers. None of them has been confirmed by the provider yet.
+
+| Provider | Onboarding path | Notes |
+|----------|-----------------|-------|
+| Cloudflare | PR merged, then email `domain-connect@cloudflare.com` | Signing required; sync flow only. Can limit the template to a test account first. Updates are picked up within about 8 hours. |
+| GoDaddy | `domainconnect@godaddy.com` (listed) | Third-party reports say GoDaddy sends new service providers to Entri, a paid intermediary. Expect a business relationship. Not confirmed by GoDaddy. |
+| IONOS | `domain_connect_admin@domain.ionos.com` (listed) | No public onboarding docs. |
+| Squarespace | Not confirmed | `domain-connect@squarespace.com` is the only lead, but it's listed for DNS providers onboarding Squarespace's own template, not for service providers. |
+| NameSilo | `domainconnect@namesilo.com` (listed) | One third-party source says they sync from the public repository. Email them anyway. |
+| WordPress.com | `registrar@automattic.com` (listed) | No developer docs. |
+| Plesk | `domainconnect@plesk.com` (listed) | The Plesk extension reads templates from its own fork, `plesk/domain-connect-templates`, last updated in 2019. It needs an email or a PR there. It checks the signature when the template sets `syncPubKeyDomain`, and it only applies where Plesk hosts the DNS. |
+
+Open question: Domain-Connect/Templates issue #385 ("Do DNS providers use this repository…?") has replies that weren't read. Check them before contacting providers.
+
 ## Still to do
 
 These items need access that the preparation work didn't have:
