@@ -109,6 +109,9 @@ Open question: Domain-Connect/Templates issue #385 ("Do DNS providers use this r
 
 ## Still to do
 
+Work is tracked in redirhub/backend#1290 (epic): backend #1291–#1297, lviv #254–#259, and ops checklist redirhub/backend#1298.
+
+
 These items need access that the preparation work didn't have:
 
 | Runbook item | Owner needs |
@@ -119,4 +122,3 @@ These items need access that the preparation work didn't have:
 | Generate the key, store `DOMAIN_CONNECT_PRIVATE_KEY`, publish `_dck1` | Trusted machine, production secrets, Cloudflare DNS for redirhub.com |
 | Online editor tests (apex and subdomain), then the PR to Domain-Connect/Templates | Browser session. The PR goes from a fork under the company's GitHub account. |
 | Emails to providers, test domains at GoDaddy and Cloudflare, staging workspace | External accounts, purchases |
-| Issues in redirhub/backend and redirhub/lviv | Can be opened on request |
