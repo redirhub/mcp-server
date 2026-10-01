@@ -22,7 +22,7 @@ RedirHub is redirect infrastructure. This MCP server gives your AI agents direct
 ## Endpoint
 
 ```
-https://api.redirhub.com/mcp/v1
+https://mcp.redirhub.com/mcp/v1
 ```
 
 ## Authentication
@@ -189,7 +189,7 @@ Add to your client config; the endpoint accepts the standard MCP HTTP transport:
 {
   "mcpServers": {
     "redirhub": {
-      "url": "https://api.redirhub.com/mcp/v1",
+      "url": "https://mcp.redirhub.com/mcp/v1",
       "headers": {
         "Authorization": "Bearer rh_YOUR_API_TOKEN"
       }
@@ -201,7 +201,7 @@ Add to your client config; the endpoint accepts the standard MCP HTTP transport:
 Works with Claude Desktop, Cursor and any MCP-compatible HTTP client. To try it from a terminal:
 
 ```bash
-npx @modelcontextprotocol/inspector --transport http --server-url https://api.redirhub.com/mcp/v1
+npx @modelcontextprotocol/inspector --transport http --server-url https://mcp.redirhub.com/mcp/v1
 ```
 
 ### 3. Use it

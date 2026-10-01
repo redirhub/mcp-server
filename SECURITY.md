@@ -11,4 +11,4 @@ Please do **not** disclose vulnerabilities publicly until we've had a chance to 
 
 ## Supported Versions
 
-The MCP server is a hosted service — the latest version is always available at `https://service.redirhub.com/mcp/v1`. No version pinning needed.
+The MCP server is a hosted service — the latest version is always available at `https://mcp.redirhub.com/mcp/v1`. No version pinning needed.
