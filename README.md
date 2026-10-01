@@ -2,21 +2,22 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/redirhub/mcp-server/pulls)
-[![MCP Server](https://img.shields.io/badge/MCP-Server-v1.0-FF6B35.svg)](https://modelcontextprotocol.io)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-v1.1-FF6B35.svg)](https://modelcontextprotocol.io)
 [![Built for AI Agents](https://img.shields.io/badge/Built%20for-AI%20Agents-8B5CF6.svg)](https://redirhub.com)
 
-**Control every redirect from your AI assistant.** Create, update, test, and monitor URL redirects through a standardized protocol — compatible with Claude, Cursor, and any MCP client.
+**Control every link from your AI assistant.** Create branded links, dynamic QR codes, domain redirects and whole website migrations, then manage, audit and measure them through a standardized protocol, compatible with Claude, Cursor and any MCP client.
 
-RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: manage redirects and short links, update domains, invite team members, query analytics — all without opening a dashboard.
+RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: create and manage links, connect domains, invite team members and query analytics, all without opening a dashboard.
 
 ## Features
 
-- **AI-Native Redirect Management** — Create, update, and test URL redirects through natural language. No dashboard required.
-- **Custom Short Links** — Generate branded short URLs with your own domains. Full alternative to Bitly.
-- **DNS Verification** — Automatic DNS correctness checks so your redirects always resolve.
-- **Analytics & Logs** — Query click statistics and raw access logs directly from your AI assistant.
-- **Team Collaboration** — Multi-member workspace with role-based access control.
-- **MCP Protocol** — Compatible with Claude, Cursor, Cline, and any MCP client.
+- **One model for every link**: branded links, dynamic QR codes, domain redirects and website migrations are created by intent and managed as one kind of object, as in the dashboard.
+- **QR codes your agent can hand over**: `create-qr-code` and `get-qr-code` return the QR code image itself, drawn exactly as the dashboard draws it.
+- **Safe bulk changes**: bulk tools preview by default and only apply changes with a confirmation token from that preview.
+- **Same rules as the dashboard**: links created or updated here go through the same validation, plan features and limits as the dashboard and the REST API.
+- **Analytics & logs**: query click statistics, raw access logs and each link's change history.
+- **Team collaboration**: multi-member workspaces with role-based access control.
+- **MCP protocol**: works with Claude, Cursor, Cline and any MCP client that calls tools.
 
 ## Endpoint
 
@@ -32,133 +33,157 @@ Generate a Workspace API token from [dash.redirhub.com](https://dash.redirhub.co
 Authorization: Bearer ***
 ```
 
-Available on **all plans**, including Free.
+Available on **all plans**, including Free. Changing links and domains needs the **editor** role; workspace settings and members need the **manager** role.
 
 ## Server Info
 
 - **Name:** Redirect Infra Public API
-- **Version:** 1.0.1
+- **Version:** 1.1.0
 - **Transport:** Streamable HTTP (JSON-RPC 2.0)
 
 ## Data Model
 
-Users belong to **workspaces** (organizations). Workspaces contain **custom domains** (Hosts) and **records** (Records, including redirects and short links).
+Users belong to **workspaces** (organizations). A workspace has **custom domains** (hosts) and **links**.
 
-## Resources
+Links are **created from four intents** but **managed as one kind of object**:
 
-Read workspace data via URI — append query params as `?key=value`.
-
-### Redirect Records
-
-| URI | Description | Filter Params |
+| Intent | Tool | What it is |
 |-----|------|------|
-| `redirects://list` | List redirect records | `filter[host]`, `filter[search]`, `filter[tags]`, `filter[dns_correct]`, `filter[created_after]`, `filter[created_before]`, `sort`, `per_page`, `cursor` |
-| `redirects://{id}` | Get a single redirect by hashid | — |
-| `redirects://count` | Count total and paused redirects | — |
+| Branded link | `create-branded-link` | A short URL on your own short-link domain, e.g. `go.acme.co/spring` |
+| Dynamic QR code | `create-qr-code` | A branded link meant for print; its destination can change after printing |
+| Domain redirect | `create-redirect` | A domain, subdomain or path sent to a destination, e.g. `old.acme.co` → `acme.com` |
+| Website migration | `bulk-import` with `handler: "migration"` | Many old URLs mapped to new ones at once |
 
-### Short Links
-
-| URI | Description | Filter Params |
-|-----|------|------|
-| `links://list` | List short links | Same as `redirects://list` |
-| `links://{id}` | Get a single short link by hashid | — |
-
-### Domains
-
-| URI | Description | Filter Params |
-|-----|------|------|
-| `hosts://list` | List custom domains | `filter[search]`, `filter[short_url]`, `sort`, `per_page`, `cursor` |
-| `hosts://{hostname}` | Get a domain by hostname | — |
-
-### Workspace & Members
-
-| URI | Description |
-|-----|------|
-| `workspace://current` | Current workspace info |
-| `members://list` | List workspace members |
-| `members://{user_id}` | Get a member by UUID |
-
-### Account
-
-| URI | Description |
-|-----|------|
-| `account://me` | Current user profile |
-
-### Catalogs
-
-| URI | Description |
-|-----|------|
-| `plugins://catalog` | Available redirect plugins |
-| `record-types://catalog` | Available redirect types and routing strategies |
+Every link has an `id` (e.g. `link_7bXmR4`) that the `get-link`, `update-link`, `delete-link`, `get-qr-code` and `get-link-history` tools take. Domains are addressed by hostname, members by `id` (e.g. `user_zwbJjgb8`).
 
 ## Tools
 
-### Record Management
+### Links: read
 
 | Tool | What It Does |
 |------|------|
-| `create-redirect-tool` | Create a redirect record |
-| `create-link-tool` | Create a short link (requires host + destination) |
-| `update-record-tool` | Update any record (redirect or short link) by hashid |
-| `delete-record-tool` | Delete any record (redirect or short link) by hashid |
+| `list-links` | List links, newest first. Filters: `ids`, `handler` (`redirect`, `migration`, `short-url`, `qr`), `host`, `search`, `tags`, `status` (`active`/`paused`), `dns_correct`, `created_after`, `created_before`. Paginate with `per_page` (max 100) and `cursor`. |
+| `get-link` | One link by `id`: destinations, redirect type, plugins, UTM parameters, QR style and tags. |
+| `count-links` | Counts for the same filters: `total`, `paused`, `dns_issue` and `no_clicks` (no click in the last four weeks). |
+| `get-link-history` | A link's changes, newest first: what changed (destination, UTM, type, status), who changed it and how. Needs the audit log feature (Pro plans and up); without it only the count is returned. |
+| `get-qr-code` | A link's QR code as a PNG image, in its saved style, with the workspace logo when the style asks for it. |
+| `get-link-options` | The accepted values: redirect types, destination routing strategies and plugins, with the plan feature each needs. |
 
-### Domain Management
-
-| Tool | What It Does |
-|------|------|
-| `connect-host-tool` | Connect a domain to your workspace. Supports root (`example.com`), subdomain (`sub.example.com`), and wildcard (`*.example.com`). Optionally enable or disable short URLs. Returns DNS configuration instructions. |
-| `update-host-tool` | Update domain settings (currently HTTPS toggle only) |
-| `refresh-host-tool` | Refresh DNS status for a domain |
-
-### Workspace & Members
+### Links: create
 
 | Tool | What It Does |
 |------|------|
-| `add-member-tool` | Invite a new member |
-| `update-member-tool` | Update member role |
-| `remove-member-tool` | Remove a member |
-| `update-workspace-tool` | Update workspace settings |
+| `create-branded-link` | `host` (a short-link domain) and `destination` required; optional `alias` (generated when omitted), `title`, `description`, `utm`, `tags`, `status`. |
+| `create-qr-code` | Same arguments as `create-branded-link`. Returns the link **and the QR code image** in the default style; the style can be customized in the dashboard. |
+| `create-redirect` | `url` (the source: domain, subdomain or path) required; optional `destination`, `destinations` + `destination_routing`, `type` (`301`, `302`, `307`, `308`, `frame`, `txt`), `forward_path`, `forward_query`, `plugins`, `utm`, `title`, `description`, `tags`, `status`. |
+
+Use `list-hosts` with `short_links_enabled: true` to find the domains branded links and QR codes can use.
+
+### Links: manage
+
+| Tool | What It Does |
+|------|------|
+| `update-link` | Update a link by `id`. Only the fields given change; the source URL and the kind of link never do. |
+| `delete-link` | Delete a link by `id`, with its change history. Irreversible. |
+| `bulk-update-links` | Apply the same changes to many links. Select them with the `list-links` filters (except `tags` and `status`, which it sets), or `all_links: true` for every link. |
+| `bulk-delete-links` | Delete links by `source_urls[]`, e.g. `["acme.co/old-page"]`. |
+| `bulk-import` | Import up to ~5,000 links per call from `rows[]`. Each row: `{url, destination?, handler?, type?, title?, description?, tags?, destinations?, destination_routing?, utm?}`; `handler` is `redirect` (default), `migration` or `short-url`. `mode` is `create` (default; existing source URLs are skipped) or `upsert` (they are replaced). Counts against the plan's link limit. |
+
+### ⚠️ Bulk operation safety
+
+`bulk-update-links`, `bulk-delete-links` and `bulk-import` **only preview unless called with `dry_run: false`**:
+
+1. Call without `dry_run`. The preview returns the affected count, a sample of the affected URLs and, for changes and deletions, a `confirmation_token`.
+2. Show the count to the user.
+3. Only after the user confirms, call again with **the same arguments**, `dry_run: false` and the `confirmation_token`.
+
+The server enforces this: `bulk-update-links`, `bulk-delete-links` and `bulk-import` in `upsert` mode refuse to apply changes without a token issued for exactly the same arguments, by the same user, in the same workspace, within the last one to two hours.
+
+### Domains
+
+| Tool | What It Does |
+|------|------|
+| `list-hosts` | List custom domains with their DNS, HTTPS and short-link status. Filters: `search`, `short_links_enabled`, `shared` (also list the platform's shared domains). |
+| `get-host` | One domain by hostname, with the DNS records it needs. |
+| `connect-host` | Connect a root (`acme.com`), sub (`go.acme.com`) or wildcard (`*.acme.com`) domain; returns the DNS records to add. Optional `short_links_enabled`, `https_requested`. |
+| `update-host` | Toggle HTTPS and short links on a domain. |
+| `refresh-host` | Re-check a domain's DNS now. |
+
+### Workspace & members
+
+| Tool | What It Does |
+|------|------|
+| `get-workspace` | The current workspace: plan, limits, usage and settings. |
+| `update-workspace` | Update a setting: `name`, `country`, `email`, `billing_extra`, `email_summary`, `email_host_status`, `email_manager`. |
+| `list-members` | Members with their role (`viewer`, `editor`, `manager`). |
+| `add-member` | Invite people by email: `invites: [{email, role?}]`. |
+| `update-member` | Change a member's role. |
+| `remove-member` | Remove a member. |
 
 ### Account
 
 | Tool | What It Does |
 |------|------|
-| `update-account-tool` | Update user profile |
+| `get-account` | The signed-in user's profile. |
+| `update-account` | Update a profile setting: `name`, `language`, `currency`, `timezone`, `current_workspace`, `login_workspace`, `country`, `phone`, `im`. |
 
-### 📊 Statistics (read-only)
-
-| Tool | What It Does |
-|------|------|
-| `get-stats-tool` | Get analytics (click) data. Set `file`/`files` for per-link stats (totals, daily trend, breakdowns by country/city/browser/device/referrer/proto); omit for org-level stats (total clicks, unique visitors, active/total link counts, breakdowns by file/handler). Supports `time_range` (7d/30d/90d/this_month/last_month/lifetime) or custom `date_from`+`date_to`. Optional `handler` and `limit`. |
-| `get-access-logs-tool` | Get raw HTTP request logs. Returns individual visit records (timestamp, IP, user agent, country, browser, referrer, etc.). Optional filters: `file`, `time_range`/`date_from`+`date_to`, `country`, `handler`, `browser`, `device`, `referrer`, `search` (IP or UA). Supports cursor-based pagination. |
-
-### Bulk Operations
+### 📊 Statistics
 
 | Tool | What It Does |
 |------|------|
-| `bulk-update-records-tool` | Apply field changes across records |
-| `bulk-delete-records-tool` | Delete records by `source_urls[]` (array of source URLs) |
-| `bulk-import-tool` | Import records from JSON `rows[]` |
+| `get-stats` | Click analytics. Set `file`/`files` for per-link stats (totals, daily trend, breakdowns by country, city, browser, device, referrer, protocol); omit them for workspace stats (total clicks, unique visitors, active/total link counts, breakdowns by link and kind). `time_range` is `7d`, `30d`, `90d`, `180d`, `this_month` or `last_month`, or use `date_from` + `date_to`. Clicks reach back 90 days (180 on plans with more analytics history); breakdowns cover the last 14 days (Enterprise: no limit). |
+| `get-access-logs` | Raw visits (time, IP, user agent, country, browser, referrer, ...). Filters: `file`, `date_from`/`date_to`, `country`, `handler`, `browser`, `device`, `referrer`, `search` (IP or user agent), `bot_free`. Covers the last 14 days (Enterprise: no limit). Cursor pagination. |
 
-**Bulk import format:** Each row: `{url, destination, type?, handler?, title?, description?, tags?, destinations?}`. `handler` is `"redirect"` or `"short-url"`. Supports `mode=create|upsert` and `dry_run`.
+## QR codes
 
-### ⚠️ Bulk Operation Safety
+`create-qr-code` and `get-qr-code` return the code as a 512 px PNG, drawn exactly as the dashboard draws it: same modules, colors, margin, workspace logo and readable link underneath. The code encodes the link with `?utm_source=qr`, so scans are counted separately from clicks.
 
-For `bulk-update-records-tool`, `bulk-delete-records-tool`, and `bulk-import-tool`:
+For print files, the REST API serves the same code as SVG or PNG (512, 1024 or 2048 px wide):
 
-1. ALWAYS invoke first with `dry_run: true` to preview the affected count.
-2. Display the affected count to the user.
-3. Only re-invoke with `dry_run: false` after explicit user confirmation.
+```
+GET https://api.redirhub.com/v1/links/{id}/qr              # SVG
+GET https://api.redirhub.com/v1/links/{id}/qr?format=png&width=2048
+```
+
+## Resources
+
+Clients that attach MCP resources can also read the same data as resources (append query params as `?key=value`): `redirects://list`, `redirects://link_{id}`, `redirects://count`, `links://list`, `links://link_{id}`, `hosts://list`, `hosts://{hostname}`, `workspace://current`, `members://list`, `members://{user_id}`, `account://me`, `plugins://catalog` and `record-types://catalog`.
+
+Most clients only let the model call tools, so prefer the tools above; they cover everything the resources do.
+
+## Renamed tools
+
+Version 1.1 dropped the `-tool` suffix and named the record tools after links. **The old names keep working**, so existing setups don't break, but new prompts and integrations should use the new ones:
+
+| Old name | New name |
+|------|------|
+| `create-redirect-tool` | `create-redirect` |
+| `create-link-tool` | `create-branded-link` |
+| `update-record-tool` | `update-link` |
+| `delete-record-tool` | `delete-link` |
+| `bulk-update-records-tool` | `bulk-update-links` |
+| `bulk-delete-records-tool` | `bulk-delete-links` |
+| `bulk-import-tool` | `bulk-import` |
+| `connect-host-tool`, `update-host-tool`, `refresh-host-tool` | `connect-host`, `update-host`, `refresh-host` |
+| `add-member-tool`, `update-member-tool`, `remove-member-tool` | `add-member`, `update-member`, `remove-member` |
+| `update-workspace-tool`, `update-account-tool` | `update-workspace`, `update-account` |
+| `get-stats-tool`, `get-access-logs-tool` | `get-stats`, `get-access-logs` |
+
+Other changes in 1.1:
+
+- **Create tools return the link.** `create-redirect` used to wrap it in `{created, record}`.
+- **Bulk tools preview by default.** They used to apply changes unless told otherwise.
+- **`bulk-update-links` needs a filter or `all_links: true`.** It used to change every record in the workspace.
 
 ## Quick Start
 
-### 1. Get Your API Token
+### 1. Get your API token
 
 Sign up at [redirhub.com](https://redirhub.com) and create a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) **Settings → API Tokens**.
 
-### 2. Configure Your MCP Client
+### 2. Configure your MCP client
 
-Add to your client config — the endpoint accepts standard MCP HTTP transport:
+Add to your client config; the endpoint accepts the standard MCP HTTP transport:
 
 ```json
 {
@@ -173,26 +198,32 @@ Add to your client config — the endpoint accepts standard MCP HTTP transport:
 }
 ```
 
-Works with Claude Desktop, Cursor, and any MCP-compatible HTTP client.
+Works with Claude Desktop, Cursor and any MCP-compatible HTTP client. To try it from a terminal:
 
-### 3. Use It
+```bash
+npx @modelcontextprotocol/inspector --transport http --server-url https://api.redirhub.com/mcp/v1
+```
+
+### 3. Use it
 
 Once connected, tell your AI agent what you need:
 
-> *"Create a 301 redirect from `/old-blog` to `/blog` on my domain."*
+> *"Create a QR code for our menu on go.acme.co that points to acme.com/menu, and show it to me."*
 
-> *"List all short links on my marketing domain."*
+> *"Redirect old.acme.co to acme.com with a 301, keeping the path."*
 
-> *"Show me click stats for the past 30 days."*
+> *"Migrate these 500 URLs from our old site to the new one."*
 
-> *"Import these 500 URLs from this JSON into my workspace."*
+> *"How many links on go.acme.co had no clicks in the last four weeks? Pause every link on that domain."*
+
+> *"Who changed the destination of go.acme.co/spring, and when?"*
 
 ## Documentation
 
-- [API Reference](https://dev.redirhub.com) — Full RedirHub API docs
-- [dash.redirhub.com](https://dash.redirhub.com) — Web dashboard
-- [MCP Specification](https://modelcontextprotocol.io) — Protocol docs
+- [API Reference](https://dev.redirhub.com): full RedirHub API docs
+- [dash.redirhub.com](https://dash.redirhub.com): web dashboard
+- [MCP Specification](https://modelcontextprotocol.io): protocol docs
 
 ---
 
-Built by [RedirHub](https://redirhub.com) — redirect infrastructure for teams that can't afford broken links.
+Built by [RedirHub](https://redirhub.com): redirect infrastructure for teams that can't afford broken links.
