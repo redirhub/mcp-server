@@ -2,10 +2,10 @@
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/redirhub/mcp-server/pulls)
-[![MCP Server](https://img.shields.io/badge/MCP-Server-v1.1-FF6B35.svg)](https://modelcontextprotocol.io)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-v1.2-FF6B35.svg)](https://modelcontextprotocol.io)
 [![Built for AI Agents](https://img.shields.io/badge/Built%20for-AI%20Agents-8B5CF6.svg)](https://redirhub.com)
 
-**Control every link from your AI assistant.** Create branded links, dynamic QR codes, domain redirects and whole website migrations, then manage, audit and measure them through a standardized protocol, compatible with Claude, Cursor and any MCP client.
+**Control every link from your AI assistant.** Create branded links, dynamic QR codes, domain redirects and whole website migrations, then manage, audit and measure them through a standardized protocol, compatible with Claude, ChatGPT, Cursor and any MCP client.
 
 RedirHub is redirect infrastructure. This MCP server gives your AI agents direct access to that infrastructure: create and manage links, connect domains, invite team members and query analytics, all without opening a dashboard.
 
@@ -17,7 +17,8 @@ RedirHub is redirect infrastructure. This MCP server gives your AI agents direct
 - **Same rules as the dashboard**: links created or updated here go through the same validation, plan features and limits as the dashboard and the REST API.
 - **Analytics & logs**: query click statistics, raw access logs and each link's change history.
 - **Team collaboration**: multi-member workspaces with role-based access control.
-- **MCP protocol**: works with Claude, Cursor, Cline and any MCP client that calls tools.
+- **Sign in, no token to copy**: assistants connect with OAuth. You sign in to RedirHub, pick the workspace and choose what the assistant may do; disconnect it any time.
+- **MCP protocol**: works with Claude, ChatGPT, Cursor, Cline and any MCP client that calls tools.
 
 ## Endpoint
 
@@ -27,18 +28,50 @@ https://mcp.redirhub.com/mcp/v1
 
 ## Authentication
 
-Generate a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) (**Settings → API Tokens**) and pass it as a Bearer token:
+### Sign in with OAuth (recommended)
+
+Add the endpoint to your assistant and it sends you to RedirHub to sign in. There is no token to copy:
+
+1. Sign in to RedirHub (or switch account).
+2. Pick the **workspace** the assistant works in. Each connection works in one workspace.
+3. Choose what it may do (below) and select **Allow access**.
+
+The assistant is then listed in **Account → AI assistants** ([account.redirhub.com/mcp](https://account.redirhub.com/mcp)), where you, or a workspace manager, can disconnect it. Disconnecting revokes its access at once; the links it made stay.
+
+| Permission | Scope | Tools | Who can grant it |
+|-----|-----|-----|-----|
+| See your links, domains and click stats | `links:read` | every read tool: `list-links`, `get-link`, `count-links`, `get-link-history`, `get-qr-code`, `get-link-options`, `list-hosts`, `get-host`, `check-host-dns`, `get-workspace`, `list-members`, `get-account`, `get-stats`, `get-access-logs` | any member (always granted) |
+| Create and edit links | `links:write` | `create-branded-link`, `create-qr-code`, `create-redirect`, `update-link`, `bulk-update-links`, `bulk-import` | editor and up (on by default) |
+| Delete links | `links:delete` | `delete-link`, `bulk-delete-links` | editor and up |
+| Add and change domains | `domains:write` | `connect-host`, `update-host`, `refresh-host` | editor and up |
+| Manage members and workspace settings | `workspace:admin` | `update-workspace`, `add-member`, `update-member`, `remove-member`, `update-account` | manager and owner |
+
+The assistant only sees the tools it was granted. Calling another one returns an error naming the permission it needs; to grant more, disconnect the assistant and connect it again.
+
+For client developers: the server follows the [MCP authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization). A request without a token gets `401` with a `WWW-Authenticate` header pointing at the protected resource metadata (`https://mcp.redirhub.com/.well-known/oauth-protected-resource/mcp/v1`). The authorization server is `https://account.redirhub.com` (metadata at `/.well-known/oauth-authorization-server`). It supports:
+
+- dynamic client registration (`/oauth/register`);
+- the authorization code flow with PKCE (`S256`);
+- refresh tokens.
+
+Access tokens last an hour and refresh tokens 30 days.
+
+### API token
+
+For scripts and clients that can't sign in, generate a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) (**Settings → API Tokens**) and pass it as a Bearer token:
 
 ```
 Authorization: Bearer ***
 ```
 
-Available on **all plans**, including Free. Changing links and domains needs the **editor** role; workspace settings and members need the **manager** role.
+An API token has every tool. It acts in the workspace it was created for, within your role: changing links and domains needs the **editor** role; workspace settings and members need the **manager** role.
+
+Both ways are available on **all plans**, including Free.
 
 ## Server Info
 
 - **Name:** Redirect Infra Public API
-- **Version:** 1.1.0
+- **Version:** 1.2.0
 - **Transport:** Streamable HTTP (JSON-RPC 2.0)
 
 ## Data Model
@@ -105,6 +138,7 @@ The server enforces this: `bulk-update-links`, `bulk-delete-links` and `bulk-imp
 |------|------|
 | `list-hosts` | List custom domains with their DNS, HTTPS and short-link status. Filters: `search`, `short_links_enabled`, `shared` (also list the platform's shared domains). |
 | `get-host` | One domain by hostname, with the DNS records it needs. |
+| `check-host-dns` | Look the domain's DNS up live and compare it with the records each setup path (CNAME, IP+TXT, NS delegation) needs, next to what the last scheduled check saw. Use it to find out why a domain doesn't work yet. Nothing is saved. |
 | `connect-host` | Connect a root (`acme.com`), sub (`go.acme.com`) or wildcard (`*.acme.com`) domain; returns the DNS records to add. Optional `short_links_enabled`, `https_requested`. |
 | `update-host` | Toggle HTTPS and short links on a domain. |
 | `refresh-host` | Re-check a domain's DNS now. |
@@ -177,13 +211,38 @@ Other changes in 1.1:
 
 ## Quick Start
 
-### 1. Get your API token
+### 1. Add the server to your assistant
 
-Sign up at [redirhub.com](https://redirhub.com) and create a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) **Settings → API Tokens**.
+**Claude** (claude.ai, Claude Desktop): **Settings → Connectors → Add custom connector**, name it `RedirHub` and paste `https://mcp.redirhub.com/mcp/v1`.
 
-### 2. Configure your MCP client
+**ChatGPT**: **Settings → Apps & Connectors**, add a custom connector with the same URL.
 
-Add to your client config; the endpoint accepts the standard MCP HTTP transport:
+**Cursor**: **Settings → MCP → Add new MCP server**, or in `mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "redirhub": {
+      "url": "https://mcp.redirhub.com/mcp/v1"
+    }
+  }
+}
+```
+
+**Any other MCP client**: add a remote (Streamable HTTP) server with the same URL. To try it from a terminal:
+
+```bash
+npx @modelcontextprotocol/inspector --transport http --server-url https://mcp.redirhub.com/mcp/v1
+```
+
+### 2. Sign in and choose what it can do
+
+Your assistant opens RedirHub: sign in, pick a workspace and the permissions, and select **Allow access**. You're sent back to the assistant, connected.
+
+<details>
+<summary>Using an API token instead</summary>
+
+Create a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com) **Settings → API Tokens** and send it as a header:
 
 ```json
 {
@@ -198,11 +257,7 @@ Add to your client config; the endpoint accepts the standard MCP HTTP transport:
 }
 ```
 
-Works with Claude Desktop, Cursor and any MCP-compatible HTTP client. To try it from a terminal:
-
-```bash
-npx @modelcontextprotocol/inspector --transport http --server-url https://mcp.redirhub.com/mcp/v1
-```
+</details>
 
 ### 3. Use it
 
