@@ -8,7 +8,15 @@
     "url": "https://www.redirhub.com"
   },
   "homepage": "https://www.redirhub.com/mcp",
-  "keywords": ["redirects", "301", "website migration", "short links", "qr codes", "dns"],
+  "keywords": [
+    "redirects",
+    "301",
+    "website migration",
+    "short links",
+    "qr codes",
+    "dns"
+  ],
+  "privacyPolicyUrl": "https://www.redirhub.com/legal/privacy-policy",
   "license": "MIT",
   "repository": "https://github.com/redirhub/mcp-server"
 }
