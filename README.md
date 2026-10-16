@@ -23,8 +23,10 @@ RedirHub is redirect infrastructure. This MCP server gives your AI agents direct
 ## Endpoint
 
 ```
-https://mcp.redirhub.com/mcp/v1
+https://mcp.redirhub.com
 ```
+
+The earlier address `https://mcp.redirhub.com/mcp/v1` keeps working.
 
 ## Authentication
 
@@ -48,7 +50,7 @@ The assistant is then listed in **Account → AI assistants** ([account.redirhub
 
 The assistant only sees the tools it was granted. Calling another one returns an error naming the permission it needs; to grant more, disconnect the assistant and connect it again.
 
-For client developers: the server follows the [MCP authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization). A request without a token gets `401` with a `WWW-Authenticate` header pointing at the protected resource metadata (`https://mcp.redirhub.com/.well-known/oauth-protected-resource/mcp/v1`). The authorization server is `https://account.redirhub.com` (metadata at `/.well-known/oauth-authorization-server`). It supports:
+For client developers: the server follows the [MCP authorization spec](https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization). A request without a token gets `401` with a `WWW-Authenticate` header pointing at the protected resource metadata (`https://mcp.redirhub.com/.well-known/oauth-protected-resource`). The authorization server is `https://account.redirhub.com` (metadata at `/.well-known/oauth-authorization-server`). It supports:
 
 - dynamic client registration (`/oauth/register`);
 - the authorization code flow with PKCE (`S256`);
@@ -209,11 +211,25 @@ Other changes in 1.1:
 - **Bulk tools preview by default.** They used to apply changes unless told otherwise.
 - **`bulk-update-links` needs a filter or `all_links: true`.** It used to change every record in the workspace.
 
+## Plugin for Cursor and Claude
+
+This repository is also an installable plugin. It bundles the MCP server above with a **website-migration** skill that walks the assistant through moving a site safely: collect the old URLs, map each one to its new URL, import the 301 redirects as a reviewed dry run, point the old domain's DNS at RedirHub, and check for missed paths after launch.
+
+| Path | Purpose |
+|-----|-----|
+| `.cursor-plugin/plugin.json` | Cursor plugin manifest |
+| `.claude-plugin/plugin.json` | Claude plugin manifest |
+| `mcp.json`, `.mcp.json` | Connect to `https://mcp.redirhub.com` (OAuth, no API key) |
+| `skills/website-migration/SKILL.md` | The website-migration skill |
+| `assets/` | Logo |
+
+Example: *"We're moving old-shop.com to www.newshop.com. Here's the sitemap — map the old URLs and set up the redirects."*
+
 ## Quick Start
 
 ### 1. Add the server to your assistant
 
-**Claude** (claude.ai, Claude Desktop): **Settings → Connectors → Add custom connector**, name it `RedirHub` and paste `https://mcp.redirhub.com/mcp/v1`.
+**Claude** (claude.ai, Claude Desktop): **Settings → Connectors → Add custom connector**, name it `RedirHub` and paste `https://mcp.redirhub.com`.
 
 **ChatGPT**: **Settings → Apps & Connectors**, add a custom connector with the same URL.
 
@@ -223,7 +239,7 @@ Other changes in 1.1:
 {
   "mcpServers": {
     "redirhub": {
-      "url": "https://mcp.redirhub.com/mcp/v1"
+      "url": "https://mcp.redirhub.com"
     }
   }
 }
@@ -232,7 +248,7 @@ Other changes in 1.1:
 **Any other MCP client**: add a remote (Streamable HTTP) server with the same URL. To try it from a terminal:
 
 ```bash
-npx @modelcontextprotocol/inspector --transport http --server-url https://mcp.redirhub.com/mcp/v1
+npx @modelcontextprotocol/inspector --transport http --server-url https://mcp.redirhub.com
 ```
 
 ### 2. Sign in and choose what it can do
@@ -248,7 +264,7 @@ Create a Workspace API token from [dash.redirhub.com](https://dash.redirhub.com)
 {
   "mcpServers": {
     "redirhub": {
-      "url": "https://mcp.redirhub.com/mcp/v1",
+      "url": "https://mcp.redirhub.com",
       "headers": {
         "Authorization": "Bearer rh_YOUR_API_TOKEN"
       }

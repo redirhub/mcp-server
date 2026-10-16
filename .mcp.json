@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "redirhub": { "type": "http", "url": "https://mcp.redirhub.com" }
+  }
+}

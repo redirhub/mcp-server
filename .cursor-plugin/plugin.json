@@ -1,0 +1,14 @@
+{
+  "name": "redirhub",
+  "version": "1.0.0",
+  "description": "Set up 301 domain redirects, migrate websites without broken links, create branded short links and dynamic QR codes, and fix domain DNS from Cursor. Includes a website-migration skill.",
+  "author": {
+    "name": "RedirHub LLC",
+    "email": "success@redirhub.com"
+  },
+  "homepage": "https://www.redirhub.com/mcp",
+  "keywords": ["redirects", "301", "website migration", "short links", "qr codes", "dns"],
+  "logo": "assets/logo.svg",
+  "license": "MIT",
+  "repository": "https://github.com/redirhub/mcp-server"
+}
